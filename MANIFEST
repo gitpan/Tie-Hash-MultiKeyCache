@@ -1,0 +1,8 @@
+Changes
+MANIFEST
+MANIFEST.SKIP
+README
+Makefile.PL
+MultiKeyCache.pm
+t/Extension.t
+META.yml                                 Module meta-data (added by MakeMaker)
