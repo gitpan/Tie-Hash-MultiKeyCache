@@ -5,4 +5,7 @@ README
 Makefile.PL
 MultiKeyCache.pm
 t/Extension.t
+t/fifo.t
+t/noaddkey.t
+t/nodelkey.t
 META.yml                                 Module meta-data (added by MakeMaker)

@@ -6,7 +6,7 @@ use Carp;
 use Tie::Hash::MultiKey;
 use vars qw( $VERSION @ISA );
 
-$VERSION = do { my @r = (q$Revision: 0.01 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 0.02 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 @ISA = qw( Tie::Hash::MultiKey );
 
@@ -15,7 +15,7 @@ my $minsize = 2;	# minimum cache size
 
 =head1 NAME
 
-Tie::Hash::MultiKeyCache
+Tie::Hash::MultiKeyCache - aged cache or fifo
 
 =head1 SYNOPSIS
 
@@ -29,6 +29,11 @@ See L<Tie::Hash::MultiKey> for complete documentation.
 		SIZE	=> n,
 		ADDKEY	=> false,
 		DELKEY	=> false;
+  or
+
+  $thm = tie %h, 'Tie::Hash::MultiKeyCache',
+		SIZE	=> n,
+		FIFO	=> true,
 
   $rv      = $thm->lock($key);
   $rv      = $thm->unlock($key);
@@ -42,6 +47,10 @@ multiple keys per value. In normal use as new values are added to the CACHE
 and the CACHE size is exceeded, the least used items will drop from the
 CACHE. Particular items may be locked into the CACHE so they never expire.
 
+The CACHE may also be configured as a FIFO where the first items added to
+the CACHE are the first to drop out when size is exceeded. As in the recent 
+use scenario, items LOCKED into CACHE will not be dropped.
+
 =over 4
 
 =item * $thm = tie %h, 'Tie::Hash::MultiKeyCache',
@@ -49,6 +58,8 @@ CACHE. Particular items may be locked into the CACHE so they never expire.
 			SIZE	=> n,
 			ADDKEY	=> false, # optional
 			DELKEY	=> false; # optional
+			FIFO	=> true;  # optional
+			  over rides ADD,DEL KEY
 
 The arguments beyond the package name may be specified as a hash as shown or
 as a reference to a hash.
@@ -124,8 +135,10 @@ sub _scrunch {
 my $subfetch = sub {
   my($self,$key,$vi) = @_;
   return unless $self->[7]->{STACK}->{$vi};	# skip if locked
-  $self->[7]->{STACK}->{$vi} = $self->[7]->{AI}++;
-  _scrunch($self) if $self->[7]->{AI} > $indexmax;
+  unless (exists $self->[7]->{FIFO} && $self->[7]->{FIFO}) {
+    $self->[7]->{STACK}->{$vi} = $self->[7]->{AI}++;
+    _scrunch($self) if $self->[7]->{AI} > $indexmax;
+  }
 };
 
 my $substore = sub {
@@ -208,6 +221,9 @@ sub TIEHASH ($$) {
 	DELKEY	 => $subdelkey
   );
   @{$self->[7]}{qw( AI SIZE STACK )} = (1,$size,{});
+  if ($args->{FIFO}) {
+    $self->[7]->{FIFO} = $args->{FIFO};
+  }
   $self;	
 }
 

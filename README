@@ -1,5 +1,5 @@
 NAME
-    Tie::Hash::MultiKeyCache
+    Tie::Hash::MultiKeyCache - aged cache or fifo
 
 SYNOPSIS
     This module is an extension of Tie::Hash::MultiKey and it iherits all of
@@ -13,6 +13,11 @@ SYNOPSIS
                     SIZE    => n,
                     ADDKEY  => false,
                     DELKEY  => false;
+      or
+
+      $thm = tie %h, 'Tie::Hash::MultiKeyCache',
+                    SIZE    => n,
+                    FIFO    => true,
 
       $rv      = $thm->lock($key);
       $rv      = $thm->unlock($key);
@@ -26,10 +31,16 @@ DESCRIPTION
     from the CACHE. Particular items may be locked into the CACHE so they
     never expire.
 
+    The CACHE may also be configured as a FIFO where the first items added
+    to the CACHE are the first to drop out when size is exceeded. As in the
+    recent use scenario, items LOCKED into CACHE will not be dropped.
+
     * $thm = tie %h, 'Tie::Hash::MultiKeyCache',
                                 SIZE    => n,
                                 ADDKEY  => false, # optional
                                 DELKEY  => false; # optional
+                                FIFO    => true;  # optional
+                                  over rides ADD,DEL KEY
 
         The arguments beyond the package name may be specified as a hash as
         shown or as a reference to a hash.
